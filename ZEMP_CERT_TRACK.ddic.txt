@@ -15,7 +15,8 @@ Key Fields:
 
 Technical Settings:
 - Data Class: APPL0 (Master Data)
-- Size Category: 0
+- Size Category: 0 
+" we can change size cat , but we've mentioned it just up to a few hundred records
 
 Delivery Class: A (Application Table)
 Table Maintenance: Enabled (via SE11 → Utilities → Table Maintenance Generator)
