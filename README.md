@@ -63,14 +63,7 @@ Use it as a template for real‑world compliance tracking or as a portfolio piec
 
 ---
 
-## Screenshots
-> Replace the placeholders below with real images located in **/screenshots**  
-> 
-> ```
-> ![Selection Screen](screenshots/selection_screen.png)
-> ![ALV Grid Output](screenshots/alv_output.png)
-> ![Expiry Email](screenshots/email_sample.png)
-> ```
+```
 
 ---
 
@@ -78,7 +71,7 @@ Use it as a template for real‑world compliance tracking or as a portfolio piec
 
 1. **Clone the repo**
    ```bash
-   git clone https://github.com/YOUR-USERNAME/employee-certification-tracker-abap.git
+   git clone https://github.com/sai-meghana5/employee-certification-tracker-abap.git
    ```
 2. **Import ABAP objects**
    * Use *SAPLink* / *ABAPGit* or manually copy `src/*` into SE38/SE80.
