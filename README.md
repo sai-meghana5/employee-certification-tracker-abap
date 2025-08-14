@@ -118,7 +118,7 @@ Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
 
 ## Author
 **Mummadi Sai Meghana**  
-*SAP ABAP Developer · Yuvaintern Internship Program*  
+*SAP ABAP Developer ·   
 [LinkedIn](https://www.linkedin.com/in/sai-meghana) · [GitHub](https://github.com/sai-meghana5)
 
 ---
