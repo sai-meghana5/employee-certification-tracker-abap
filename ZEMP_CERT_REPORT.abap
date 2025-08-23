@@ -40,6 +40,7 @@ START-OF-SELECTION.
     WRITE: / 'Employee ID:', wa_cert-emp_id,
              'Certification:', wa_cert-cert_name,
              'Expiry Date:', wa_cert-expiry_date,
+             'Issue Date:' ,wa_cert-issue_date,
              'Days Left:', lv_days_left,
              'Status:', wa_cert-status.
 
