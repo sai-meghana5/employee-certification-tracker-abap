@@ -20,3 +20,5 @@ Technical Settings:
 
 Delivery Class: A (Application Table)
 Table Maintenance: Enabled (via SE11 → Utilities → Table Maintenance Generator)
+
+
