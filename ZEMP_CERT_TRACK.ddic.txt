@@ -1,16 +1,21 @@
 Table: ZEMP_CERT_TRACK (Custom table for tracking employee certifications)
-Field Name	Data Element / Type	Description
-EMP_ID	CHAR(10)	Employee ID
-CERT_ID	CHAR(10)	Certification ID
-CERT_NAME	CHAR(40)	Certification Name
-ISSUE_DATE	DATS	Certification Issue Date
-EXPIRY_DATE	DATS	Certification Expiry Date
-STATUS	CHAR(1)	Certification Status ('A' = Active, 'E' = Expired)
-EMAIL	AD_SMTPADR (241)	Employee Email Address
+
+
+
+| **Field Name** | **Data Element / Type** | **Description**                                    |
+| -------------- | ----------------------- | -------------------------------------------------- |
+| EMP\_ID        | CHAR(10)                | Employee ID                                        |
+| CERT\_ID       | CHAR(10)                | Certification ID                                   |
+| CERT\_NAME     | CHAR(40)                | Certification Name                                 |
+| ISSUE\_DATE    | DATS                    | Certification Issue Date                           |
+| EXPIRY\_DATE   | DATS                    | Certification Expiry Date                          |
+| STATUS         | CHAR(1)                 | Certification Status ('A' = Active, 'E' = Expired) |
+| EMAIL          | AD\_SMTPADR (241)       | Employee Email Address                             |
+
 
 Key Fields:
-EMP_ID
 
+EMP_ID
 CERT_ID
 
 Technical Settings:
