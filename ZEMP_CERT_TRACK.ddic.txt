@@ -1,24 +1,23 @@
 Table: ZEMP_CERT_TRACK (Custom table for tracking employee certifications)
-
-Field Name      Data Element / Type     Description
----------------------------------------------------------------
-EMP_ID          CHAR(10)                Employee ID
-CERT_ID         CHAR(10)                Certification ID
-CERT_NAME       CHAR(40)                Certification Name
-ISSUE_DATE      DATS                    Certification Issue Date
-EXPIRY_DATE     DATS                    Certification Expiry Date
-STATUS          CHAR(1)                 Certification Status ('A' = Active, 'E' = Expired)
+Field Name	Data Element / Type	Description
+EMP_ID	CHAR(10)	Employee ID
+CERT_ID	CHAR(10)	Certification ID
+CERT_NAME	CHAR(40)	Certification Name
+ISSUE_DATE	DATS	Certification Issue Date
+EXPIRY_DATE	DATS	Certification Expiry Date
+STATUS	CHAR(1)	Certification Status ('A' = Active, 'E' = Expired)
+EMAIL	AD_SMTPADR (241)	Employee Email Address
 
 Key Fields:
-- EMP_ID
-- CERT_ID
+EMP_ID
+
+CERT_ID
 
 Technical Settings:
-- Data Class: APPL0 (Master Data)
-- Size Category: 0 
-" we can change size cat , but we've mentioned it just up to a few hundred records
+Data Class: APPL0 (Master Data)
+
+Size Category: 0 (Few hundred records)
 
 Delivery Class: A (Application Table)
+
 Table Maintenance: Enabled (via SE11 → Utilities → Table Maintenance Generator)
-
-
