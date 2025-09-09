@@ -19,10 +19,21 @@ define table zemp_cert_track {
   email             : abap.string(241);   // Employee Email (AD_SMTPADR)
 
 }
+🔑 Notes
 
+@AbapCatalog.tableCategory : #TRANSPARENT → creates a normal transparent table.
+@AbapCatalog.deliveryClass : #A → application data.
+@AbapCatalog.dataMaintenance : #ALLOWED → allows SM30 maintenance (like SE11 generator).
+You define keys explicitly with key.
+Instead of CHAR/DATS, you use ABAP types (abap.char(10), abap.dats).
 
+Advantages
 
-USE SE11 
+No need for SE11 GUI.
+You can version-control your table (GitHub-friendly).
+Cleaner for cloud-ready projects (RAP, CAP).
+
+************* USE SE11 *******************************************************************************************************************************************************
 follow the below steps
 
 
