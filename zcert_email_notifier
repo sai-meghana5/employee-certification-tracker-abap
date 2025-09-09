@@ -1,0 +1,79 @@
+REPORT zcert_email_notifier.
+
+PARAMETERS: p_days TYPE i DEFAULT 30.   "Configurable window
+
+DATA: lt_expiring TYPE TABLE OF zemployee_cert,
+      ls_expiring TYPE zemployee_cert,
+      lt_message  TYPE bcsy_text,
+      lv_subject  TYPE so_obj_des.
+
+" Step 1: Select expiring certifications
+SELECT * FROM zemployee_cert
+  INTO TABLE @lt_expiring
+  WHERE expiry_date <= sy-datum + p_days
+    AND expiry_date >= sy-datum.
+
+IF lt_expiring IS INITIAL.
+  WRITE: 'No certifications expiring in next', p_days, 'days.'.
+  EXIT.
+ENDIF.
+
+" Step 2: Loop through employees and send emails
+LOOP AT lt_expiring INTO ls_expiring.
+
+  TRY.
+      " Create send request
+      DATA(lo_send_request) = cl_bcs=>create_persistent( ).
+
+      CLEAR lt_message.
+      APPEND |Dear { ls_expiring-ename },| TO lt_message.
+      APPEND |Your certification { ls_expiring-cert_name }| TO lt_message.
+      APPEND |will expire on { ls_expiring-expiry_date }.| TO lt_message.
+      APPEND 'Please renew it in time.' TO lt_message.
+
+      lv_subject = |[Reminder] Certification Expiry - { ls_expiring-cert_name }|.
+
+      " Create email document
+      DATA(lo_document) = cl_document_bcs=>create_document(
+                           i_type    = 'RAW'
+                           i_text    = lt_message
+                           i_subject = lv_subject ).
+      lo_send_request->add_document( lo_document ).
+
+      " Sender
+      DATA(lo_sender) = cl_sapuser_bcs=>create( sy-uname ).
+      lo_send_request->set_sender( lo_sender ).
+
+      " Recipient
+      DATA(lo_recipient) = cl_cam_address_bcs=>create_internet_address( ls_expiring-email ).
+      lo_send_request->add_recipient( lo_recipient ).
+
+      " Send
+      lo_send_request->send( i_commit_task = 'X' ).
+      COMMIT WORK.
+
+      " Log success
+      INSERT zcert_email_log VALUES (
+        log_id    = cl_system_uuid=>create_uuid_x16_static( )
+        pernr     = ls_expiring-pernr
+        cert_id   = ls_expiring-cert_id
+        email     = ls_expiring-email
+        send_date = sy-datum
+        status    = 'SUCCESS'
+        message   = 'Email sent successfully'
+      ).
+
+    CATCH cx_bcs INTO DATA(lx_bcs).
+      " Log failure
+      INSERT zcert_email_log VALUES (
+        log_id    = cl_system_uuid=>create_uuid_x16_static( )
+        pernr     = ls_expiring-pernr
+        cert_id   = ls_expiring-cert_id
+        email     = ls_expiring-email
+        send_date = sy-datum
+        status    = 'FAILURE'
+        message   = lx_bcs->get_text( )
+      ).
+  ENDTRY.
+
+ENDLOOP.
