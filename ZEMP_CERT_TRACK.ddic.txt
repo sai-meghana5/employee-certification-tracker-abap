@@ -1,3 +1,32 @@
+Creating a database table in ABAP purely with code using ABAP Dictionary DDL (Data Definition Language) in Eclipse/ADT (ABAP Development Tools). This is the modern way in S/4HANA (instead of SE11).
+
+You do this by creating a DDL Source object with the keyword define table.
+
+@EndUserText.label : 'Employee Certification Tracker'
+@AbapCatalog.enhancementCategory : #NOT_EXTENSIBLE
+@AbapCatalog.tableCategory : #TRANSPARENT
+@AbapCatalog.deliveryClass : #A
+@AbapCatalog.dataMaintenance : #ALLOWED
+define table zemp_cert_track {
+
+  key emp_id        : abap.char(10);
+  key cert_id       : abap.char(10);
+  
+  cert_name         : abap.char(40);
+  issue_date        : abap.dats;
+  expiry_date       : abap.dats;
+  status            : abap.char(1);       // 'A' = Active, 'E' = Expired
+  email             : abap.string(241);   // Employee Email (AD_SMTPADR)
+
+}
+
+
+
+USE SE11 
+follow the below steps
+
+
+
 Table: ZEMP_CERT_TRACK (Custom table for tracking employee certifications)
 
 
