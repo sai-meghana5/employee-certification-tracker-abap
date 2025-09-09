@@ -1,79 +1,113 @@
-REPORT zcert_email_notifier.
+*&---------------------------------------------------------------------*
+*& Report ZEMP_CERT_EMAIL_NOTIFY
+*&---------------------------------------------------------------------*
+*& Purpose: Send email reminders for certifications nearing expiry
+*& Author : Mummadi Sai Meghana
+*& Date   : Sep 2025
+*&---------------------------------------------------------------------*
 
-PARAMETERS: p_days TYPE i DEFAULT 30.   "Configurable window
+REPORT zemp_cert_email_notify.
 
-DATA: lt_expiring TYPE TABLE OF zemployee_cert,
-      ls_expiring TYPE zemployee_cert,
+TABLES: zemp_cert_track.
+
+TYPES: BEGIN OF ty_cert,
+         emp_id      TYPE zemp_cert_track-emp_id,
+         cert_id     TYPE zemp_cert_track-cert_id,
+         cert_name   TYPE zemp_cert_track-cert_name,
+         expiry_date TYPE zemp_cert_track-expiry_date,
+         status      TYPE zemp_cert_track-status,
+         email       TYPE ad_smtpadr, " Add email field or join with HR master table
+       END OF ty_cert.
+
+DATA: lt_expiring TYPE STANDARD TABLE OF ty_cert,
+      ls_expiring TYPE ty_cert,
       lt_message  TYPE bcsy_text,
       lv_subject  TYPE so_obj_des.
 
-" Step 1: Select expiring certifications
-SELECT * FROM zemployee_cert
-  INTO TABLE @lt_expiring
-  WHERE expiry_date <= sy-datum + p_days
-    AND expiry_date >= sy-datum.
+PARAMETERS: p_days TYPE i DEFAULT 30. " Days before expiry to trigger email
 
-IF lt_expiring IS INITIAL.
-  WRITE: 'No certifications expiring in next', p_days, 'days.'.
-  EXIT.
-ENDIF.
+START-OF-SELECTION.
 
-" Step 2: Loop through employees and send emails
-LOOP AT lt_expiring INTO ls_expiring.
+  " 1. Select certifications expiring soon
+  SELECT emp_id
+         cert_id
+         cert_name
+         expiry_date
+         status
+         email         " make sure this field exists or join with HR table
+    FROM zemp_cert_track
+    INTO TABLE @lt_expiring
+    WHERE expiry_date <= sy-datum + p_days
+      AND expiry_date >= sy-datum
+      AND status = 'A'.
 
-  TRY.
-      " Create send request
-      DATA(lo_send_request) = cl_bcs=>create_persistent( ).
+  IF lt_expiring IS INITIAL.
+    WRITE: / 'No certifications expiring in next', p_days, 'days.'.
+    EXIT.
+  ENDIF.
 
-      CLEAR lt_message.
-      APPEND |Dear { ls_expiring-ename },| TO lt_message.
-      APPEND |Your certification { ls_expiring-cert_name }| TO lt_message.
-      APPEND |will expire on { ls_expiring-expiry_date }.| TO lt_message.
-      APPEND 'Please renew it in time.' TO lt_message.
+  " 2. Loop through employees and send emails
+  LOOP AT lt_expiring INTO ls_expiring.
 
-      lv_subject = |[Reminder] Certification Expiry - { ls_expiring-cert_name }|.
+    TRY.
+        " Create send request
+        DATA(lo_send_request) = cl_bcs=>create_persistent( ).
 
-      " Create email document
-      DATA(lo_document) = cl_document_bcs=>create_document(
-                           i_type    = 'RAW'
-                           i_text    = lt_message
-                           i_subject = lv_subject ).
-      lo_send_request->add_document( lo_document ).
+        " Email content
+        CLEAR lt_message.
+        APPEND |Dear Employee { ls_expiring-emp_id },| TO lt_message.
+        APPEND |Your certification "{ ls_expiring-cert_name }"| TO lt_message.
+        APPEND |will expire on { ls_expiring-expiry_date }.| TO lt_message.
+        APPEND 'Please renew it at the earliest.' TO lt_message.
 
-      " Sender
-      DATA(lo_sender) = cl_sapuser_bcs=>create( sy-uname ).
-      lo_send_request->set_sender( lo_sender ).
+        lv_subject = |[Reminder] Certification Expiry - { ls_expiring-cert_name }|.
 
-      " Recipient
-      DATA(lo_recipient) = cl_cam_address_bcs=>create_internet_address( ls_expiring-email ).
-      lo_send_request->add_recipient( lo_recipient ).
+        " Create document
+        DATA(lo_document) = cl_document_bcs=>create_document(
+                             i_type    = 'RAW'
+                             i_text    = lt_message
+                             i_subject = lv_subject ).
+        lo_send_request->add_document( lo_document ).
 
-      " Send
-      lo_send_request->send( i_commit_task = 'X' ).
-      COMMIT WORK.
+        " Set sender (system user)
+        DATA(lo_sender) = cl_sapuser_bcs=>create( sy-uname ).
+        lo_send_request->set_sender( lo_sender ).
 
-      " Log success
-      INSERT zcert_email_log VALUES (
-        log_id    = cl_system_uuid=>create_uuid_x16_static( )
-        pernr     = ls_expiring-pernr
-        cert_id   = ls_expiring-cert_id
-        email     = ls_expiring-email
-        send_date = sy-datum
-        status    = 'SUCCESS'
-        message   = 'Email sent successfully'
-      ).
+        " Add recipient (employee email)
+        DATA(lo_recipient) = cl_cam_address_bcs=>create_internet_address( ls_expiring-email ).
+        lo_send_request->add_recipient( lo_recipient ).
 
-    CATCH cx_bcs INTO DATA(lx_bcs).
-      " Log failure
-      INSERT zcert_email_log VALUES (
-        log_id    = cl_system_uuid=>create_uuid_x16_static( )
-        pernr     = ls_expiring-pernr
-        cert_id   = ls_expiring-cert_id
-        email     = ls_expiring-email
-        send_date = sy-datum
-        status    = 'FAILURE'
-        message   = lx_bcs->get_text( )
-      ).
-  ENDTRY.
+        " Send email
+        lo_send_request->send( i_commit_task = 'X' ).
+        COMMIT WORK.
 
-ENDLOOP.
+        WRITE: / 'Email sent to:', ls_expiring-emp_id, ls_expiring-email.
+
+      CATCH cx_bcs INTO DATA(lx_bcs).
+        WRITE: / 'Failed to send email to:', ls_expiring-emp_id,
+                 'Error:', lx_bcs->get_text( ).
+    ENDTRY.
+
+  ENDLOOP.
+
+  " 3. Optional: If many employees expiring soon, send summary to HR
+  IF lines( lt_expiring ) > 10.
+    CLEAR lt_message.
+    APPEND |Dear HR Team,| TO lt_message.
+    APPEND |More than 10 certifications are expiring in the next { p_days } days.| TO lt_message.
+    APPEND 'Please review the attached list.' TO lt_message.
+
+    lv_subject = |[Alert] Bulk Certification Expiry Notification|.
+
+    " HR summary mail
+    DATA(lo_req_hr) = cl_bcs=>create_persistent( ).
+    DATA(lo_doc_hr) = cl_document_bcs=>create_document(
+                        i_type    = 'RAW'
+                        i_text    = lt_message
+                        i_subject = lv_subject ).
+    lo_req_hr->add_document( lo_doc_hr ).
+    lo_req_hr->set_sender( cl_sapuser_bcs=>create( sy-uname ) ).
+    lo_req_hr->add_recipient( cl_cam_address_bcs=>create_internet_address( 'hr@company.com' ) ).
+    lo_req_hr->send( i_commit_task = 'X' ).
+    COMMIT WORK.
+  ENDIF.
