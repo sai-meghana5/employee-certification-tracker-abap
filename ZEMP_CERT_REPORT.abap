@@ -61,3 +61,11 @@ START-OF-SELECTION.
       program_error    = 1
       OTHERS           = 2.
 
+*output will be in this format
+/*| Emp ID | Cert ID | Cert Name | Issue Date | Expiry Date | Status   | Days Left | Alert         |
+| ------ | ------- | --------- | ---------- | ----------- | -------- | --------- | ------------- |
+| 1001   | C01     | SAP\_ABAP | 2024-09-30 | 2025-09-30  | Active   | 15        | EXPIRING SOON |
+| 1002   | C02     | JAVA      | 2024-05-01 | 2025-05-01  | Inactive | -120      | EXPIRED       |
+*/
+
+
