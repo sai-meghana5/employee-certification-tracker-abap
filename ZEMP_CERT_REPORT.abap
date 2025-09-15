@@ -1,7 +1,7 @@
 *&---------------------------------------------------------------------*
 *& Report ZEMP_CERT_REPORT
 *&---------------------------------------------------------------------*
-*& Purpose: Display employee certifications and alert on expiry status
+*& Purpose: Display employee certifications with ALV grid and expiry alerts
 *& Author : Mummadi Sai Meghana
 *& Date   : May 2025
 *&---------------------------------------------------------------------*
@@ -17,6 +17,8 @@ TYPES: BEGIN OF ty_cert,
          issue_date  TYPE zemp_cert_track-issue_date,
          expiry_date TYPE zemp_cert_track-expiry_date,
          status      TYPE zemp_cert_track-status,
+         days_left   TYPE i,
+         alert       TYPE string,
        END OF ty_cert.
 
 DATA: it_cert TYPE STANDARD TABLE OF ty_cert,
@@ -24,6 +26,7 @@ DATA: it_cert TYPE STANDARD TABLE OF ty_cert,
 
 START-OF-SELECTION.
 
+* Fetch certification data
   SELECT emp_id
          cert_id
          cert_name
@@ -31,23 +34,30 @@ START-OF-SELECTION.
          expiry_date
          status
     FROM zemp_cert_track
-    INTO TABLE it_cert.
+    INTO TABLE @it_cert.
 
+* Add calculated fields (days_left & alert)
   LOOP AT it_cert INTO wa_cert.
+    wa_cert-days_left = wa_cert-expiry_date - sy-datum.
 
-    DATA(lv_days_left) = wa_cert-expiry_date - sy-datum.
-
-    WRITE: / 'Employee ID:', wa_cert-emp_id,
-             'Certification:', wa_cert-cert_name,
-             'Expiry Date:', wa_cert-expiry_date,
-             'Issue Date:' ,wa_cert-issue_date,
-             'Days Left:', lv_days_left,
-             'Status:', wa_cert-status.
-
-    IF lv_days_left < 0.
-      WRITE: '-> EXPIRED'.
-    ELSEIF lv_days_left < 30.
-      WRITE: '-> EXPIRING SOON!'.
+    IF wa_cert-days_left < 0.
+      wa_cert-alert = 'EXPIRED'.
+    ELSEIF wa_cert-days_left < 30.
+      wa_cert-alert = 'EXPIRING SOON'.
+    ELSE.
+      wa_cert-alert = 'VALID'.
     ENDIF.
 
+    MODIFY it_cert FROM wa_cert.
   ENDLOOP.
+
+* Display with ALV Grid
+  CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY'
+    EXPORTING
+      i_structure_name = 'ZEMP_CERT_TRACK' " Dictionary structure
+    TABLES
+      t_outtab         = it_cert
+    EXCEPTIONS
+      program_error    = 1
+      OTHERS           = 2.
+
